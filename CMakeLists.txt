@@ -32,3 +32,27 @@ ENDIF(HOSTNAME)
 
 ENABLE_TESTING()
 SUBDIRS(sm)
+
+
+
+add_definitions(-std=c++11)
+include_directories(./sm/lib)
+aux_source_directory(sm/csm DIR_SRCS)
+list(REMOVE_ITEM DIR_SRCS sm/csm/laser_data_cairo.c)
+set(CMAKE_BUILD_TYPE Release)
+
+add_executable(lms2json
+		DataUtil/lms2json.cpp
+		DataUtil/lmsfilereader.cpp
+		DataUtil/CsvOdomReader.cpp
+		)
+
+#link_directories(
+#		/home/akira/Project/csm/build/sm/
+#)
+target_link_libraries(
+		lms2json
+		csm
+#		/home/akira/Project/csm/cmake-build-debug/sm/libcsm.so
+)
+

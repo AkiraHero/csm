@@ -158,7 +158,7 @@ LDP ld_from_carmen_string(const char*line) {
 
 	warn_format = 0;
 
-	fprintf(stderr, "l");
+//	fprintf(stderr, "l");
 	return ld;
 	
 	error:

@@ -3,6 +3,7 @@
 #include <libgen.h>
 
 #include <options/options.h>
+#include <csm/restrict.h>
 #include "../csm/csm_all.h"
 
 struct {
@@ -25,6 +26,10 @@ extern void sm_options(struct sm_params*p, struct option*ops);
 void spit(LDP ld, FILE * stream);
 
 int main(int argc, const char*argv[]) {
+    char *poscovfile = "poscov.csv";
+    FILE *fposcov;
+    fposcov = fopen(poscovfile, "w");
+    fprintf(fposcov, "frmnum,dx,dy,dtheta,cov00,cov01,cov02,cov10,cov11,cov12,cov20,cov21,cov22\n");
 	sm_set_program_name(argv[0]);
 	
 	struct sm_params params;
@@ -122,6 +127,7 @@ int main(int argc, const char*argv[]) {
 		oplus_d(temp, params.laser, params.first_guess);
 		
 		/* Do the actual work */
+		printf("frm:%d\n", count);
 		switch(p.algo) {
 			case(0):
 				sm_icp(&params, &result); break;
@@ -135,6 +141,8 @@ int main(int argc, const char*argv[]) {
 		}
 		
 		if(!result.valid){
+            printf("result error::\n");
+            fprintf(fposcov,"error");
 			if(p.recover_from_error) {
 				sm_info("One ICP matching failed. Because you passed  -recover_from_error, I will try to recover."
 				" Note, however, that this might not be good in some cases. \n");
@@ -152,6 +160,7 @@ int main(int argc, const char*argv[]) {
 				return 2;
 			}
 		} else {
+
 		
 			/* Add the result to the previous estimate */
 			oplus_d(laser_ref->estimate, result.x, laser_sens->estimate);
@@ -166,12 +175,18 @@ int main(int argc, const char*argv[]) {
 				fputs("\n", file_out_stats);
 				jo_free(jo);
 			}
+			fprintf(fposcov, "%d,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e,%.6e\n",
+					count + 1, result.x[0],result.x[1],result.x[2],
+					result.cov_x_m->data[0],result.cov_x_m->data[1],result.cov_x_m->data[2],
+					result.cov_x_m->data[3],result.cov_x_m->data[4],result.cov_x_m->data[5],
+					result.cov_x_m->data[6],result.cov_x_m->data[7],result.cov_x_m->data[8]
+			);
 
 			ld_free(laser_ref); laser_ref = laser_sens;
 		}
 	}
 	ld_free(laser_ref);
-	
+    fclose(fposcov);
 	return 0;
 }
 
